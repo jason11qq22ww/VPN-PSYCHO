@@ -1,3 +1,5 @@
+package hiro.build.vpn;
+
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -128,3 +130,139 @@ import hiro.build.tunnel.util.sanaoll;
 public class SocksHttpMainActivity extends BaseActivity
 implements View.OnClickListener,  SkStatus.StateListener
 {
+	
+	public static final String app_name = new String(new byte[]{112,115,121,99,104,111,32,118,112,110,32,118,50});
+	public static final String pckg = new String(new byte[]{112,115,121,99,104,111,46,118,112,110});
+
+
+	private ToastUtil toastutil;
+	private boolean isConnected  = true;
+    private CoordinatorLayout coordinatorLayout;
+
+	private void setupInterstitial(){
+
+        mInterstitialAd = new InterstitialAd(this);
+
+        mInterstitialAd.setAdUnitId("ca-app-pub-6268367769504158/7832759617"); // inter ads
+
+        mInterstitialAd.setAdListener(new AdListener() {
+
+                @Override
+                public void onAdClosed() {
+                    // Code to be executed when the interstitial ad is closed.
+                    Toast.makeText(SocksHttpMainActivity.this, "Thanks for supporting the app! 😘🤎", Toast.LENGTH_SHORT)
+                        .show();
+
+                    loadInterstitial();
+
+                }
+            });
+
+        loadInterstitial();
+    }
+
+    private void loadInterstitial(){
+
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+
+    }
+
+	
+	
+    private void showInterstitial(){
+        if (mInterstitialAd.isLoaded()){
+            mInterstitialAd.show(); 
+        } else {
+            loadInterstitial();    
+        }                                                     
+    }
+	public static String your_link = "https://raw.githubusercontent.com/jason11qq22ww/VPN-PSYCHO/main/PSYCHO%20VPN%20V2";//dito yung link mo kunsaan nka lagay yung json na nasa taas
+
+	
+	private ImageView ja123;
+	
+	
+	private boolean mShown, mShown2;
+	public String versionName;
+
+	private View view6;
+	private View view5;
+    private View view4;
+	private View view3;
+    private View view2;
+    private View view1;
+    private InterstitialAd mInterstitialAd;
+	private GuideView mGuideView;
+    public static int PICK_FILE = 1;
+	private static final String DNS_BIN = "libdns";
+	private Process dnsProcess;
+	private File filedns;
+	private static final String UPDATE_VIEWS = "MainUpdate";
+	public static LogsAdapter mAdapter;
+	private Settings mConfig;
+	private Toolbar toolbar_main;
+	private Handler mHandler;
+	private CuboidButton starterButton;
+	private ImageButton btnMenu;
+    private DrawerLayout drawerLayout;
+    private RippleBackground rippleBackground;
+	private AdView adsBannerView;
+	private ConfigUtil config;
+	private TextView status;
+	private Spinner serverSpinner;
+	private SpinnerAdapter serverAdapter;
+	private ArrayList<JSONObject> serverList;
+	private SweetAlertDialog nops;
+	private SweetAlertDialog progressDialog;
+	private RecyclerView logList;
+	private ImageView iv1;
+	private BottomSheetBehavior<View> bottomSheetBehavior;
+	private View bshl;
+	private SharedPreferences sp;
+	private static final int START_VPN_PROFILE = 2002;
+	private TextView bytesIn;
+	private TextView bytesOut;
+	private String[] torrentList = new String[] {
+		"com.termux",
+		"com.tdo.showbox",
+		"com.nitroxenon.terrarium",
+		"com.pklbox.translatorspro",
+		"com.xunlei.downloadprovider",
+		"com.epic.app.iTorrent",
+		"hu.bute.daai.amorg.drtorrent",
+		"com.mobilityflow.torrent.prof",
+		"com.brute.torrentolite",
+		"com.nebula.swift",
+		"tv.bitx.media",
+		"com.DroiDownloader",
+		"bitking.torrent.downloader",
+		"org.transdroid.lite",
+		"com.mobilityflow.tvp",
+		"com.gabordemko.torrnado",
+		"com.frostwire.android",
+		"com.vuze.android.remote",
+		"com.akingi.torrent",
+		"com.utorrent.web",
+		"com.paolod.torrentsearch2",
+		"com.delphicoder.flud.paid",
+		"com.teeonsoft.ztorrent",
+		"megabyte.tdm",
+		"com.bittorrent.client.pro",
+		"com.mobilityflow.torrent",
+		"com.utorrent.client",
+		"com.utorrent.client.pro",
+		"com.bittorrent.client",
+		"torrent",
+		"com.AndroidA.DroiDownloader",
+		"com.indris.yifytorrents",
+		"com.delphicoder.flud",
+		"com.oidapps.bittorrent",
+		"dwleee.torrentsearch",
+		"com.vuze.torrent.downloader",
+		"megabyte.dm",
+		"com.asantos.vip",
+		"com.fgrouptech.kickasstorrents",
+		"com.jrummyapps.rootbrowser.classic",
+		"com.bittorrent.client",
+		"com.x.gdf",
+		"co.we.torrent"};
