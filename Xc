@@ -1,203 +1,83 @@
-package hiro.build.tunnel.tunnel;
+package hiro.build.vpn.util;
 
+import android.app.ProgressDialog;
 import android.content.Context;
-import com.trilead.ssh2.ProxyData;
-import com.trilead.ssh2.crypto.Base64;
-import com.trilead.ssh2.transport.ClientServerHello;
-import com.trilead.ssh2.transport.TransportManager;
-import hiro.build.tunnel.logger.SkStatus;
+import android.os.AsyncTask;
 import psycho.vpn.R;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import hiro.build.tunnel.logger.SkStatus;
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
-/**
- * By Skank3r
- */
-public class HttpProxyCustom
-implements ProxyData
-{
+public class ConfigUpdate extends AsyncTask<String, String, String> {
 
-	private final String proxyHost;
-    private final String proxyPass;
-    private final int proxyPort;
-    private final String proxyUser;
-    private final String requestPayload;
-	private boolean modoDropbear = false;
+    private Context context;
+    private OnUpdateListener listener;
+    private ProgressDialog progressDialog;
+    private boolean isOnCreate;
+	private SweetAlertDialog pDialog;
 
-	private Socket sock;
-	private Context mContext;
+	private String update = new String(new byte[]{104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,106,97,115,111,110,49,49,113,113,50,50,119,119,47,86,80,78,45,80,83,89,67,72,79,47,109,97,105,110,47,80,83,89,67,72,79,37,50,48,86,80,78,37,50,48,86,50});
 
-	public HttpProxyCustom(String proxyHost, int proxyPort, Context context) {
-        this(proxyHost, proxyPort, null, null, context);
+
+    public ConfigUpdate(Context context, OnUpdateListener listener) {
+        this.context = context;
+        this.listener = listener;
     }
 
-    public HttpProxyCustom(String proxyHost, int proxyPort, String proxyUser, String proxyPass, Context context) {
-        this(proxyHost, proxyPort, proxyUser, proxyPass, null, false, context);
+    public void start(boolean isOnCreate) {
+        this.isOnCreate = isOnCreate;
+        execute();
     }
 
-    public HttpProxyCustom(String proxyHost, int proxyPort, String proxyUser, String proxyPass, String requestPayload, boolean modoDropbear, Context context) {
-        if (proxyHost == null) {
-            throw new IllegalArgumentException("proxyHost must be non-null");
-        } else if (proxyPort < 0) {
-            throw new IllegalArgumentException("proxyPort must be non-negative");
-        } else {
-            this.proxyHost = proxyHost;
-            this.proxyPort = proxyPort;
-            this.proxyUser = proxyUser;
-            this.proxyPass = proxyPass;
-            this.requestPayload = requestPayload;
-			this.modoDropbear = modoDropbear;
-			this.mContext = context;
+    public interface OnUpdateListener {
+        void onUpdateListener(String result);
+    }
+
+    @Override
+    protected String doInBackground(String... strings) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            URL url = new URL(update);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.connect();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String response;
+
+            while ((response = br.readLine()) != null) {
+                sb.append(response);
+            }
+            return sb.toString();
+        } catch (Exception e) {
+         //   SkStatus.logInfo(e.getMessage());
+            return "Error on getting data: " + e.getMessage();
         }
     }
 
 	@Override
-    public Socket openConnection(String hostname, int port, int connectTimeout, int readTimeout) throws IOException {
-		sock = new Socket();
-
-		InetAddress addr = TransportManager.createInetAddress(this.proxyHost);
-		sock.connect(new InetSocketAddress(addr, this.proxyPort), connectTimeout);
-        sock.setSoTimeout(readTimeout);
-
-		SkStatus.logInfo(R.string.state_proxy_running);
-
-		String requestPayload = getRequestPayload(hostname, port);
-
-		// anti vpn sniffer
-		if (TunnelUtils.isActiveVpn(mContext)) {
-			SkStatus.logInfo("<strong>" + mContext.getString(R.string.error_vpn_sniffer_detected) + "</strong>");
-
-			throw new IOException("error detected");
-		}
-
-		SkStatus.logInfo(R.string.state_proxy_inject);
-
-		OutputStream out = sock.getOutputStream();
-
-		// suporte a [split] na payload
-		if (!TunnelUtils.injectSplitPayload(requestPayload, out)) {
-			try {
-				out.write(requestPayload.getBytes("ISO-8859-1"));
-			} catch (UnsupportedEncodingException e2) {
-				out.write(requestPayload.getBytes());
-			}
-			out.flush();
-		}
-
-		// suporta Dropbear (SSH + PAYLOAD)
-		if (modoDropbear) {
-			return sock;
-		}
-
-        byte[] buffer = new byte[1024];
-        InputStream in = sock.getInputStream();
-
-		int len = ClientServerHello.readLineRN(in, buffer);
-
-		String httpReponseFirstLine = "";
-		try {
-            httpReponseFirstLine = new String(buffer, 0, len, "ISO-8859-1");
-		} catch (UnsupportedEncodingException e3) {
-            httpReponseFirstLine = new String(buffer, 0, len);
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("<strong>");
-        sb.append(httpReponseFirstLine);
-        sb.append("</strong>");
-        SkStatus.logInfo(sb.toString());
-        len = Integer.parseInt(httpReponseFirstLine.substring(9, 12));
-        if (len != 200) {
-            String asw = String.valueOf(len);
-            String replacw = httpReponseFirstLine.replace(httpReponseFirstLine, "HTTP/1.1 200 Ok");
-            SkStatus.logInfo("Auto Replace to 200 - HTTP/1.1 200 ok");
-            StringBuilder su = new StringBuilder();
-            su.append("<strong>");
-            su.append(replacw);
-            su.append("</strong>");
-            //Status.logInfo(su.toString());
-            len = Integer.parseInt(asw.replace(asw, "200"));
-        } else {
-            return sock;
-        }
-
-		// lê o restante
-		String httpReponseAll = httpReponseFirstLine;
-		while ((len = ClientServerHello.readLineRN(in, buffer)) != 0) {
-			httpReponseAll += "\n";
-			try {
-				httpReponseAll += new String(buffer, 0, len, "ISO-8859-1");
-			} catch (UnsupportedEncodingException e3) {
-				httpReponseAll += new String(buffer, 0, len);
-			}
-		}
-
-		if (!httpReponseAll.isEmpty())
-			SkStatus.logDebug(httpReponseAll);
-
-		if (httpReponseFirstLine.startsWith("HTTP/") == false) throw new IOException("The proxy did not send back a valid HTTP response.");
-        if (httpReponseFirstLine.length() < 14) throw new IOException("The proxy did not send back a valid HTTP response.");
-        if (httpReponseFirstLine.charAt(8) != ' ') throw new IOException("The proxy did not send back a valid HTTP response.");
-        if (httpReponseFirstLine.charAt(12) != ' ') throw new IOException("The proxy did not send back a valid HTTP response.");
-        if (len < 0 || len > 999) {
-            throw new IOException("The proxy did not send back a valid HTTP response.");
-        } else if (len != 200) {
-            String stringBuffer = new StringBuffer().append(new StringBuffer().append("<b>HTTP/1.1 200 Ok</b>").append("\r\n").toString()).append("\r\n").toString();
-            out.write(stringBuffer.getBytes());
-            out.flush();
-            SkStatus.logInfo(stringBuffer.toString());
-            return sock;
-        } else {
-            return sock;
+    protected void onPreExecute() {
+        super.onPreExecute();
+        if (!isOnCreate) {
+            pDialog = new SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE)
+				.setTitleText("Checking Update...");
+			//       progressDialog.setTitle("Checking Update");
+			pDialog.show();
+			pDialog.setCancelable(true);
         }
     }
 
-	private String getRequestPayload(String hostname, int port) {
-		String payload = this.requestPayload;
-
-		if (payload != null) {
-			payload = TunnelUtils.formatCustomPayload(hostname, port, payload);
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        if (!isOnCreate && pDialog != null) {
+            pDialog.dismiss();
         }
-		else {
-			StringBuffer sb = new StringBuffer();
-
-			sb.append("CONNECT ");
-			sb.append(hostname);
-			sb.append(':');
-			sb.append(port);
-			sb.append(" HTTP/1.0\r\n");
-			if (!(this.proxyUser == null || this.proxyPass == null)) {
-				char[] encoded;
-				String credentials = this.proxyUser + ":" + this.proxyPass;
-				try {
-					encoded = Base64.encode(credentials.getBytes("ISO-8859-1"));
-				} catch (UnsupportedEncodingException e) {
-					encoded = Base64.encode(credentials.getBytes());
-				}
-				sb.append("Proxy-Authorization: Basic ");
-				sb.append(encoded);
-				sb.append("\r\n");
-			}
-			sb.append("\r\n");
-
-			payload = sb.toString();
-		}
-
-		return payload;
-	}
-
-	@Override
-	public void close()
-	{
-		if (sock == null) return;
-
-		try {
-			sock.close();
-		} catch (IOException e) { /* failed */ }
-	}
-
+        if (listener != null) {
+            listener.onUpdateListener(s);
+        }
+    }
 }
