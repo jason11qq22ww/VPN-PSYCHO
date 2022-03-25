@@ -1,268 +1,203 @@
-package hiro.build.vpn;
+package hiro.build.tunnel.tunnel;
 
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.graphics.Color;
-import android.net.Uri;
-import android.net.VpnService;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.PersistableBundle;
-import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.widget.AppCompatRadioButton;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.PopupMenu;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
-import cn.pedant.SweetAlert.SweetAlertDialog;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import hiro.build.tunnel.StatisticGraphData;
-import hiro.build.tunnel.StatisticGraphData.DataTransferStats;
-import hiro.build.tunnel.config.ConfigParser;
-import hiro.build.tunnel.config.ExceptionHandler;
-import hiro.build.tunnel.config.Settings;
-import hiro.build.tunnel.logger.ConnectionStatus;
+import com.trilead.ssh2.ProxyData;
+import com.trilead.ssh2.crypto.Base64;
+import com.trilead.ssh2.transport.ClientServerHello;
+import com.trilead.ssh2.transport.TransportManager;
 import hiro.build.tunnel.logger.SkStatus;
-import hiro.build.tunnel.tunnel.TunnelManagerHelper;
-import hiro.build.tunnel.tunnel.TunnelUtils;
-import hiro.build.vpn.SocksHttpMainActivity;
-import hiro.build.vpn.activities.AboutActivity;
-import hiro.build.vpn.activities.BaseActivity;
-import hiro.build.vpn.activities.ConfigGeralActivity;
-import hiro.build.vpn.activities.SMSuPdater;
-import hiro.build.vpn.adapter.LogsAdapter;
-import hiro.build.vpn.adapter.SpinnerAdapter;
-import hiro.build.vpn.util.AESCrypt;
-import hiro.build.vpn.util.ConfigUpdate;
-import hiro.build.vpn.util.ConfigUtil;
-import hiro.build.vpn.util.Utils;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-import org.json.JSONException;
-import org.json.JSONObject;
-import psycho.vpn.BuildConfig;
 import psycho.vpn.R;
-import smartdevelop.ir.eram.showcaseviewlib.GuideView;
-import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
-import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
-import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
-import android.app.NotificationManager;
-import android.app.Notification;
-import android.graphics.BitmapFactory;
-import android.app.NotificationChannel;
-import android.widget.AdapterView;
-import com.google.android.gms.ads.InterstitialAd;
-import hiro.build.vpn.util.ToastUtil;
-import android.app.DownloadManager;
-import android.support.v7.app.NotificationCompat;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import android.view.LayoutInflater;
-import android.database.Cursor;
-import android.util.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
-import org.json.*;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.NotificationCompat;
-import android.app.Notification;
-import android.content.*;
-import android.widget.*;
-import android.net.*;
-import android.media.*;
-import android.content.pm.*;
-import android.app.DownloadManager;
-import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.view.*;
-import java.io.*;
-import android.util.*;
-import android.support.v4.content.ContextCompat;
-import hiro.build.tunnel.util.CustomNativeLoader;
-import hiro.build.vpn.util.KillThis;
-import android.graphics.drawable.ColorDrawable;
-import android.support.v7.widget.CardView;
-import hiro.build.tunnel.util.sanaoll;
-public class SocksHttpMainActivity extends BaseActivity
-implements View.OnClickListener,  SkStatus.StateListener
+/**
+ * By Skank3r
+ */
+public class HttpProxyCustom
+implements ProxyData
 {
-	
-	public static final String app_name = new String(new byte[]{112,115,121,99,104,111,32,118,112,110,32,118,50});
-	public static final String pckg = new String(new byte[]{112,115,121,99,104,111,46,118,112,110});
 
+	private final String proxyHost;
+    private final String proxyPass;
+    private final int proxyPort;
+    private final String proxyUser;
+    private final String requestPayload;
+	private boolean modoDropbear = false;
 
-	private ToastUtil toastutil;
-	private boolean isConnected  = true;
-    private CoordinatorLayout coordinatorLayout;
+	private Socket sock;
+	private Context mContext;
 
-	private void setupInterstitial(){
-
-        mInterstitialAd = new InterstitialAd(this);
-
-        mInterstitialAd.setAdUnitId("ca-app-pub-6268367769504158/7832759617"); // inter ads
-
-        mInterstitialAd.setAdListener(new AdListener() {
-
-                @Override
-                public void onAdClosed() {
-                    // Code to be executed when the interstitial ad is closed.
-                    Toast.makeText(SocksHttpMainActivity.this, "Thanks for supporting the app! 😘🤎", Toast.LENGTH_SHORT)
-                        .show();
-
-                    loadInterstitial();
-
-                }
-            });
-
-        loadInterstitial();
+	public HttpProxyCustom(String proxyHost, int proxyPort, Context context) {
+        this(proxyHost, proxyPort, null, null, context);
     }
 
-    private void loadInterstitial(){
-
-        mInterstitialAd.loadAd(new AdRequest.Builder().build());
-
+    public HttpProxyCustom(String proxyHost, int proxyPort, String proxyUser, String proxyPass, Context context) {
+        this(proxyHost, proxyPort, proxyUser, proxyPass, null, false, context);
     }
 
-	
-	
-    private void showInterstitial(){
-        if (mInterstitialAd.isLoaded()){
-            mInterstitialAd.show(); 
+    public HttpProxyCustom(String proxyHost, int proxyPort, String proxyUser, String proxyPass, String requestPayload, boolean modoDropbear, Context context) {
+        if (proxyHost == null) {
+            throw new IllegalArgumentException("proxyHost must be non-null");
+        } else if (proxyPort < 0) {
+            throw new IllegalArgumentException("proxyPort must be non-negative");
         } else {
-            loadInterstitial();    
-        }                                                     
+            this.proxyHost = proxyHost;
+            this.proxyPort = proxyPort;
+            this.proxyUser = proxyUser;
+            this.proxyPass = proxyPass;
+            this.requestPayload = requestPayload;
+			this.modoDropbear = modoDropbear;
+			this.mContext = context;
+        }
     }
-	public static String your_link = "https://raw.githubusercontent.com/jason11qq22ww/VPN-PSYCHO/main/PSYCHO%20VPN%20V2";//dito yung link mo kunsaan nka lagay yung json na nasa taas
 
-	
-	private ImageView ja123;
-	
-	
-	private boolean mShown, mShown2;
-	public String versionName;
+	@Override
+    public Socket openConnection(String hostname, int port, int connectTimeout, int readTimeout) throws IOException {
+		sock = new Socket();
 
-	private View view6;
-	private View view5;
-    private View view4;
-	private View view3;
-    private View view2;
-    private View view1;
-    private InterstitialAd mInterstitialAd;
-	private GuideView mGuideView;
-    public static int PICK_FILE = 1;
-	private static final String DNS_BIN = "libdns";
-	private Process dnsProcess;
-	private File filedns;
-	private static final String UPDATE_VIEWS = "MainUpdate";
-	public static LogsAdapter mAdapter;
-	private Settings mConfig;
-	private Toolbar toolbar_main;
-	private Handler mHandler;
-	private CuboidButton starterButton;
-	private ImageButton btnMenu;
-    private DrawerLayout drawerLayout;
-    private RippleBackground rippleBackground;
-	private AdView adsBannerView;
-	private ConfigUtil config;
-	private TextView status;
-	private Spinner serverSpinner;
-	private SpinnerAdapter serverAdapter;
-	private ArrayList<JSONObject> serverList;
-	private SweetAlertDialog nops;
-	private SweetAlertDialog progressDialog;
-	private RecyclerView logList;
-	private ImageView iv1;
-	private BottomSheetBehavior<View> bottomSheetBehavior;
-	private View bshl;
-	private SharedPreferences sp;
-	private static final int START_VPN_PROFILE = 2002;
-	private TextView bytesIn;
-	private TextView bytesOut;
-	private String[] torrentList = new String[] {
-		"com.termux",
-		"com.tdo.showbox",
-		"com.nitroxenon.terrarium",
-		"com.pklbox.translatorspro",
-		"com.xunlei.downloadprovider",
-		"com.epic.app.iTorrent",
-		"hu.bute.daai.amorg.drtorrent",
-		"com.mobilityflow.torrent.prof",
-		"com.brute.torrentolite",
-		"com.nebula.swift",
-		"tv.bitx.media",
-		"com.DroiDownloader",
-		"bitking.torrent.downloader",
-		"org.transdroid.lite",
-		"com.mobilityflow.tvp",
-		"com.gabordemko.torrnado",
-		"com.frostwire.android",
-		"com.vuze.android.remote",
-		"com.akingi.torrent",
-		"com.utorrent.web",
-		"com.paolod.torrentsearch2",
-		"com.delphicoder.flud.paid",
-		"com.teeonsoft.ztorrent",
-		"megabyte.tdm",
-		"com.bittorrent.client.pro",
-		"com.mobilityflow.torrent",
-		"com.utorrent.client",
-		"com.utorrent.client.pro",
-		"com.bittorrent.client",
-		"torrent",
-		"com.AndroidA.DroiDownloader",
-		"com.indris.yifytorrents",
-		"com.delphicoder.flud",
-		"com.oidapps.bittorrent",
-		"dwleee.torrentsearch",
-		"com.vuze.torrent.downloader",
-		"megabyte.dm",
-		"com.asantos.vip",
-		"com.fgrouptech.kickasstorrents",
-		"com.jrummyapps.rootbrowser.classic",
-		"com.bittorrent.client",
-		"com.x.gdf",
-		"co.we.torrent"};
+		InetAddress addr = TransportManager.createInetAddress(this.proxyHost);
+		sock.connect(new InetSocketAddress(addr, this.proxyPort), connectTimeout);
+        sock.setSoTimeout(readTimeout);
+
+		SkStatus.logInfo(R.string.state_proxy_running);
+
+		String requestPayload = getRequestPayload(hostname, port);
+
+		// anti vpn sniffer
+		if (TunnelUtils.isActiveVpn(mContext)) {
+			SkStatus.logInfo("<strong>" + mContext.getString(R.string.error_vpn_sniffer_detected) + "</strong>");
+
+			throw new IOException("error detected");
+		}
+
+		SkStatus.logInfo(R.string.state_proxy_inject);
+
+		OutputStream out = sock.getOutputStream();
+
+		// suporte a [split] na payload
+		if (!TunnelUtils.injectSplitPayload(requestPayload, out)) {
+			try {
+				out.write(requestPayload.getBytes("ISO-8859-1"));
+			} catch (UnsupportedEncodingException e2) {
+				out.write(requestPayload.getBytes());
+			}
+			out.flush();
+		}
+
+		// suporta Dropbear (SSH + PAYLOAD)
+		if (modoDropbear) {
+			return sock;
+		}
+
+        byte[] buffer = new byte[1024];
+        InputStream in = sock.getInputStream();
+
+		int len = ClientServerHello.readLineRN(in, buffer);
+
+		String httpReponseFirstLine = "";
+		try {
+            httpReponseFirstLine = new String(buffer, 0, len, "ISO-8859-1");
+		} catch (UnsupportedEncodingException e3) {
+            httpReponseFirstLine = new String(buffer, 0, len);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("<strong>");
+        sb.append(httpReponseFirstLine);
+        sb.append("</strong>");
+        SkStatus.logInfo(sb.toString());
+        len = Integer.parseInt(httpReponseFirstLine.substring(9, 12));
+        if (len != 200) {
+            String asw = String.valueOf(len);
+            String replacw = httpReponseFirstLine.replace(httpReponseFirstLine, "HTTP/1.1 200 Ok");
+            SkStatus.logInfo("Auto Replace to 200 - HTTP/1.1 200 ok");
+            StringBuilder su = new StringBuilder();
+            su.append("<strong>");
+            su.append(replacw);
+            su.append("</strong>");
+            //Status.logInfo(su.toString());
+            len = Integer.parseInt(asw.replace(asw, "200"));
+        } else {
+            return sock;
+        }
+
+		// lê o restante
+		String httpReponseAll = httpReponseFirstLine;
+		while ((len = ClientServerHello.readLineRN(in, buffer)) != 0) {
+			httpReponseAll += "\n";
+			try {
+				httpReponseAll += new String(buffer, 0, len, "ISO-8859-1");
+			} catch (UnsupportedEncodingException e3) {
+				httpReponseAll += new String(buffer, 0, len);
+			}
+		}
+
+		if (!httpReponseAll.isEmpty())
+			SkStatus.logDebug(httpReponseAll);
+
+		if (httpReponseFirstLine.startsWith("HTTP/") == false) throw new IOException("The proxy did not send back a valid HTTP response.");
+        if (httpReponseFirstLine.length() < 14) throw new IOException("The proxy did not send back a valid HTTP response.");
+        if (httpReponseFirstLine.charAt(8) != ' ') throw new IOException("The proxy did not send back a valid HTTP response.");
+        if (httpReponseFirstLine.charAt(12) != ' ') throw new IOException("The proxy did not send back a valid HTTP response.");
+        if (len < 0 || len > 999) {
+            throw new IOException("The proxy did not send back a valid HTTP response.");
+        } else if (len != 200) {
+            String stringBuffer = new StringBuffer().append(new StringBuffer().append("<b>HTTP/1.1 200 Ok</b>").append("\r\n").toString()).append("\r\n").toString();
+            out.write(stringBuffer.getBytes());
+            out.flush();
+            SkStatus.logInfo(stringBuffer.toString());
+            return sock;
+        } else {
+            return sock;
+        }
+    }
+
+	private String getRequestPayload(String hostname, int port) {
+		String payload = this.requestPayload;
+
+		if (payload != null) {
+			payload = TunnelUtils.formatCustomPayload(hostname, port, payload);
+        }
+		else {
+			StringBuffer sb = new StringBuffer();
+
+			sb.append("CONNECT ");
+			sb.append(hostname);
+			sb.append(':');
+			sb.append(port);
+			sb.append(" HTTP/1.0\r\n");
+			if (!(this.proxyUser == null || this.proxyPass == null)) {
+				char[] encoded;
+				String credentials = this.proxyUser + ":" + this.proxyPass;
+				try {
+					encoded = Base64.encode(credentials.getBytes("ISO-8859-1"));
+				} catch (UnsupportedEncodingException e) {
+					encoded = Base64.encode(credentials.getBytes());
+				}
+				sb.append("Proxy-Authorization: Basic ");
+				sb.append(encoded);
+				sb.append("\r\n");
+			}
+			sb.append("\r\n");
+
+			payload = sb.toString();
+		}
+
+		return payload;
+	}
+
+	@Override
+	public void close()
+	{
+		if (sock == null) return;
+
+		try {
+			sock.close();
+		} catch (IOException e) { /* failed */ }
+	}
+
+}
