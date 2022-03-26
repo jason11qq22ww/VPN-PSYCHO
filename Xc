@@ -1,120 +1,363 @@
-package hiro.build.vpn.util;
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical">
 
-import android.content.Context;
+	<LinearLayout
+		android:id="@+id/activity_mainLinearLayout"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:orientation="vertical"
+		android:padding="10dp">
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+		<LinearLayout
+			xmlns:app="http://schemas.android.com/apk/res-auto"
+			android:id="@+id/headerLayout"
+			android:layout_width="match_parent"
+			android:layout_marginLeft="10dp"
+			android:layout_marginRight="10dp"
+			android:layout_marginTop="10dp"
+			android:layout_height="wrap_content"
+			app:cardCornerRadius="3.0dp">
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+			<RelativeLayout
+				android:layout_width="match_parent"
+				android:layout_height="150dp"
+				android:gravity="center">
 
-/**
- * Created by: KervzCodes
- * Date Crated: 08/10/2020
- * Project: SocksHttp-master (ENGLISH)
- **/
-public class ConfigUtil {
+				<RelativeLayout
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:gravity="center"
+					android:onClick="flip">
 
-    Context context;
+					<RelativeLayout
+						android:layout_height="150dp"
+						android:layout_width="match_parent"
+						android:paddingLeft="5dp"
+						android:id="@+id/graph_l">
 
-    public static final String PASSWORD = new String(new byte[]{106,97,115,111,110});
+						<hiro.build.vpn.graph.OpenVPNStatisticView
+							android:id="@+id/imgBackCard"
+							android:layout_width="match_parent"
+							android:layout_height="140dp"
+							android:visibility="gone"/>
 
-    public ConfigUtil(Context context) {
-        this.context = context;
-    }
+						<com.github.mikephil.charting.charts.LineChart
+							android:id="@+id/chart1"
+							android:layout_width="match_parent"
+							android:layout_height="match_parent"
+							android:layout_marginBottom="15dp"/>
 
-    public String getVersion() {
-        try {
-            String version = getJSONConfig().getString("Version");
-            return version;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+					</RelativeLayout>
 
-    public String geNote()
-    {
-        try {
-            String releaseNote = getJSONConfig().getString("ReleaseNotes");
-            return releaseNote;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+					<RelativeLayout
+						android:gravity="center"
+						android:layout_height="match_parent"
+						android:layout_width="match_parent"
+						android:id="@+id/image_l"
+						android:background="#ffffff">
 
+						<ImageView
+							android:layout_width="100dp"
+							android:layout_height="100dp"
+							android:scaleType="fitXY"
+							android:src="@drawable/vpnets_graph"
+							android:cropToPadding="true"/>
 
-    public JSONArray getServersArray() {
-        try {
-            if (getJSONConfig() != null) {
-                JSONArray array = getJSONConfig().getJSONArray("Servers");
-                return array;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+					</RelativeLayout>
 
-    public boolean versionCompare(String NewVersion, String OldVersion) {
-        String[] vals1 = NewVersion.split("\\.");
-        String[] vals2 = OldVersion.split("\\.");
-        int i = 0;
+				</RelativeLayout>
 
-        // set index to first non-equal ordinal or length of shortest version string
-        while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
-            i++;
-        }
-        // compare first non-equal ordinal number
-        if (i < vals1.length && i < vals2.length) {
-            int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
-            return Integer.signum(diff) > 0;
-        }
+			</RelativeLayout>
 
-        // the strings are equal or one string is a substring of the other
-        // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
-        return Integer.signum(vals1.length - vals2.length) > 0;
-    }
+		</LinearLayout>
 
-    private JSONObject getJSONConfig() {
-        try {
-            File file = new File(context.getFilesDir(), "Config.json");
-            if (file.exists()) {
-                String json_file = readStream(new FileInputStream(file));
-                String json = AESCrypt.decrypt(PASSWORD, json_file);
-                return new JSONObject(json);
-            } else {
-                InputStream inputStream = context.getAssets().open("config.json");
-                String json = AESCrypt.decrypt(PASSWORD, readStream(inputStream));
-                return new JSONObject(json);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+		<LinearLayout
+			xmlns:app="http://schemas.android.com/apk/res-auto"
+			android:id="@+id/headerLayout"
+			android:layout_width="match_parent"
+			android:layout_marginLeft="10dp"
+			android:layout_marginRight="10dp"
+			android:layout_marginTop="10dp"
+			android:layout_height="wrap_content"
+			app:cardCornerRadius="5.0dp"
+			android:visibility="gone">
 
-    private String readStream(InputStream in)
-    {
-        StringBuilder sb = new StringBuilder();
-        try {
-            Reader reader = new BufferedReader(new InputStreamReader(in));
-            char[] buff = new char[1024];
-            while (true) {
-                int read = reader.read(buff, 0, buff.length);
-                if (read <= 0) {
-                    break;
-                }
-                sb.append(buff, 0, read);
-            }
-        } catch (Exception e) {
+			<LinearLayout
+				android:gravity="center|left"
+				android:orientation="horizontal"
+				android:padding="10.0dip"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content">
 
-        }
-        return sb.toString();
-    }
-}
+				<ImageView
+					android:layout_width="90.0dip"
+					android:layout_height="90.0dip"
+					android:src="@drawable/icon"
+					android:background="@drawable/button_red"/>
+
+				<View
+					android:background="?android:dividerHorizontal"
+					android:layout_width="1.0dip"
+					android:layout_height="fill_parent"
+					android:layout_marginLeft="5.0dip"
+					android:layout_marginRight="5.0dip"/>
+
+				<LinearLayout
+					android:orientation="horizontal"
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:gravity="center">
+
+					<LinearLayout
+						android:gravity="center|left"
+						android:orientation="vertical"
+						android:padding="10.0dip"
+						android:layout_weight="1.0"
+						android:layout_width="fill_parent"
+						android:layout_height="fill_parent">
+
+						<TextView
+							android:textAppearance="?android:textAppearanceMedium"
+							android:textStyle="bold"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="VPNet v1"/>
+
+						<TextView
+							android:textAppearance="?android:textAppearanceSmall"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Virtual Private Network"/>
+
+						<TextView
+							android:textAppearance="?android:textAppearanceSmall"
+							android:textSize="11.0sp"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="(Rebuild By Michaele Abalos)"/>
+
+					</LinearLayout>
+
+					<ImageButton
+						android:layout_width="40dp"
+						android:layout_height="40dp"
+						android:layout_margin="10dp"
+						android:layout_marginRight="20dp"
+						android:onClick="draw"
+						style="?android:attr/buttonBarButtonStyle"
+						android:src="@drawable/ic_drawer"
+						android:background="@drawable/button_red"
+						android:layout_marginLeft="20dp"/>
+
+				</LinearLayout>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+		<LinearLayout
+			xmlns:app="http://schemas.android.com/apk/res-auto"
+			android:id="@+id/spinnerLayout"
+			android:layout_width="match_parent"
+			android:layout_marginLeft="10dp"
+			android:layout_marginRight="10dp"
+			android:layout_marginTop="10dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/headerLayout"
+			app:cardCornerRadius="3.0dp">
+
+			<LinearLayout
+				android:orientation="vertical"
+				android:layout_margin="8.0dip"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content">
+
+				<Spinner
+					android:id="@+id/serverSpinner"
+					android:background="@drawable/button_red"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="10.0dip"
+					android:gravity="center"
+					android:popupBackground="@drawable/hiro_spinner_bg"
+					android:layout_gravity="center"
+					android:layout_marginTop="10dp"/>
+
+				<LinearLayout
+					xmlns:app="http://schemas.android.com/apk/res-auto"
+					android:id="@+id/spinnerLayout"
+					android:layout_width="match_parent"
+					android:layout_marginLeft="5dp"
+					android:layout_marginRight="5dp"
+					android:layout_marginBottom="5dp"
+					android:layout_height="wrap_content"
+					app:cardCornerRadius="3.0dp">
+
+					<LinearLayout
+						android:gravity="center"
+						android:orientation="horizontal"
+						android:padding="5.0dip"
+						android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center"
+						android:layout_weight="5.0">
+
+						<LinearLayout
+							android:gravity="center"
+							android:orientation="vertical"
+							android:layout_width="fill_parent"
+							android:layout_height="wrap_content"
+							android:layout_weight="1.0"
+							android:layout_marginRight="60dp">
+
+							<ImageView
+								android:tint="?colorAccent"
+								android:textAppearance="?android:textAppearanceSmall"
+								android:layout_width="15.0dip"
+								android:layout_height="15.0dip"
+								android:src="@drawable/ic_gdownload"/>
+
+							<TextView
+								android:textAppearance="?android:textAppearanceSmall"
+								android:textSize="11.0sp"
+								android:gravity="center"
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:text="0 B"
+								android:id="@+id/bytes_in"/>
+
+						</LinearLayout>
+
+						<LinearLayout
+							android:gravity="center"
+							android:orientation="vertical"
+							android:layout_width="fill_parent"
+							android:layout_height="wrap_content"
+							android:layout_weight="1.0"
+							android:layout_marginLeft="60dp">
+
+							<ImageView
+								android:tint="?colorAccent"
+								android:textAppearance="?android:textAppearanceSmall"
+								android:layout_width="15.0dip"
+								android:layout_height="15.0dip"
+								android:src="@drawable/ic_gupload"/>
+
+							<TextView
+								android:textAppearance="?android:textAppearanceSmall"
+								android:textSize="11.0sp"
+								android:gravity="center"
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:text="0 B"
+								android:id="@+id/bytes_out"/>
+
+						</LinearLayout>
+
+					</LinearLayout>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="55dp">
+
+					<LinearLayout
+						android:gravity="center"
+						android:orientation="horizontal"
+						android:padding="5.0dip"
+						android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:background="@drawable/button_red">
+
+						<ImageView
+							android:layout_width="10.0dip"
+							android:layout_height="30.0dip"
+							android:background="@drawable/timer"/>
+
+						<LinearLayout
+							android:orientation="vertical"
+							android:layout_width="fill_parent"
+							android:layout_height="wrap_content"
+							android:layout_margin="10.0dip"
+							android:layout_weight="1.0"
+							android:layout_gravity="center"
+							android:gravity="left">
+
+							<TextView
+								android:textAppearance="?android:attr/textAppearanceSmall"
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:text="Time Left:"
+								android:textSize="13sp"/>
+
+							<TextView
+								android:textAppearance="?android:attr/textAppearanceSmall"
+								android:textSize="13.0sp"
+								android:id="@+id/tvTimeRemain"
+								android:layout_width="wrap_content"
+								android:layout_height="wrap_content"
+								android:text="00:00"/>
+
+						</LinearLayout>
+
+						<Button
+							android:textColor="#ffffffff"
+							android:id="@+id/btnAddTime"
+							android:layout_width="120.0dip"
+							android:layout_height="35.0dip"
+							android:textAllCaps="false"
+							android:text="Add + Time"
+							android:background="@drawable/butys"
+							android:layout_marginBottom="35dp"
+							android:gravity="center"
+							android:layout_gravity="center"
+							android:layout_marginLeft="20dp"
+							android:layout_margin="20dp"
+							android:layout_marginEnd="20dp"
+							android:layout_marginTop="60dp"
+							android:singleLine="true"
+							android:typeface="monospace"
+							android:width="72dp"
+							android:height="36dp"/>
+
+					</LinearLayout>
+
+				</LinearLayout>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+		<Button
+			android:id="@+id/activity_starterButtonMain"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:text="Connect"
+			style="?android:attr/buttonStyleSmall"
+			android:layout_marginTop="10dp"
+			android:textAllCaps="false"
+			android:layout_marginBottom="5dp"
+			android:textColor="#FF000000"
+			android:background="#FFE9A20C"/>
+
+		<com.google.android.gms.ads.AdView
+			xmlns:ads="http://schemas.android.com/apk/res-auto"
+			android:id="@+id/adBannerMainView"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/spinnerLayout"
+			android:layout_centerHorizontal="true"
+			android:layout_marginTop="3dp"
+			ads:adSize="BANNER"
+			ads:adUnitId="ca-app-pub-7598967394813618/8916292876"
+			android:layout_gravity="center"/>
+
+	</LinearLayout>
+
+</RelativeLayout>
